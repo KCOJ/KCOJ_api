@@ -58,12 +58,12 @@ class KCOJ:
                     submit = '期限已到' if tag.find_all('td')[4].get_text().strip() == '期限已過' else '期限未到'
                     status = tag.find_all('td')[6].get_text().strip()
                     language = tag.find_all('td')[5].get_text().strip()
-                    questions[number] = (deadline, submit, status, language)
+                    questions[number] = [deadline, submit, status, language]
 
             return questions
 
         except requests.exceptions.Timeout:
-            return {'Timeout': ('Timeout', 'Timeout', 'Timeout', 'Timeout')}
+            return {'Timeout': ['Timeout', 'Timeout', 'Timeout', 'Timeout']}
 
     # Show the content of the question
     def show_question(self, number):
@@ -165,9 +165,9 @@ class KCOJ:
                     soup = BeautifulSoup(response.text, 'html.parser')
                     content = soup.find('pre').get_text().strip().replace('\r', '')
                     
-                    notices.append((date, title, content))
+                    notices.append([date, title, content])
 
             return notices
 
         except requests.exceptions.Timeout:
-            return [('Timeout', 'Timeout', 'Timeout')]
+            return [['Timeout', 'Timeout', 'Timeout']]
