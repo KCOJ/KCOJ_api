@@ -8,6 +8,16 @@ class KCOJ:
         self.url = url
         self.session = requests.Session()
 
+    # Get course list
+    def get_courses(self):
+        try:
+            response = self.session.get(self.url, timeout=0.5, verify=False)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            return list(map(lambda x: x.get_text(), soup.find_all('font')))
+
+        except requests.exceptions.Timeout:
+            return None
+
     # Login KCOJ
     def login(self, username, password, course):
         try:
