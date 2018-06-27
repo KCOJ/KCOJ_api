@@ -145,3 +145,29 @@ class KCOJ:
             
         except requests.exceptions.Timeout:
             return False
+
+    # Get notice in MessageBoard
+    def get_notices(self):
+        try:
+            notices = []
+            response = self.session.get(self.url + '/MessageBoard', timeout=0.5, verify=False)
+            soup = BeautifulSoup(response.text, 'html.parser')
+
+            for tag in soup.find_all('tr'):
+                if tag.find('a') == None:
+                    continue
+
+                else:
+                    date = tag.find_all('td')[1].get_text().strip()
+                    title = tag.find('a').get_text().strip()
+
+                    response = self.session.get(self.url + '/showArticle?time=' + date, timeout=0.5, verify=False)
+                    soup = BeautifulSoup(response.text, 'html.parser')
+                    content = soup.find('pre').get_text().strip().replace('\r', '')
+                    
+                    notices.append((date, title, content))
+
+            return notices
+
+        except requests.exceptions.Timeout:
+            return [('Timeout', 'Timeout', 'Timeout')]
