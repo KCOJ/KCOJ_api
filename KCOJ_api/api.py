@@ -3,119 +3,244 @@
 import requests
 from bs4 import BeautifulSoup
 
+
 class KCOJ:
     def __init__(self, url):
-        self.url = url
-        self.session = requests.Session()
+        self.__url = url
+        self.__session = requests.Session()
 
-    # Get course list
     def get_courses(self):
+        """
+        取得課程列表
+        """
         try:
-            response = self.session.get(self.url + '/Login', timeout=0.5, verify=False)
+            # 取得資料
+            response = self.__session.get(
+                self.__url + '/Login', timeout=0.5, verify=False)
             soup = BeautifulSoup(response.text, 'html.parser')
-            return list(map(lambda x: x.get_text(), soup.find_all('font')))
+            # 取出課程名稱
+            result = []
+            for tag in soup.find_all('font'):
+                result.append(tag.get_text())
+            # 回傳結果
+            return result
 
         except requests.exceptions.Timeout:
-            return None
+            return ["Timeout"]
 
-    # Login KCOJ
     def login(self, username, password, course):
+        """
+        登入課程
+        """
         try:
+            # 操作所需資訊
             payload = {
-                'name': username, 
+                'name': username,
                 'passwd': password,
                 'rdoCourse': course
             }
-            return self.session.post(self.url + '/Login', data=payload, timeout=0.5, verify=False)
-            
+            # 回傳嘗試登入的回應
+            return self.__session.post(
+                self.__url + '/Login', data=payload, timeout=0.5, verify=False)
+
         except requests.exceptions.Timeout:
             return None
 
-    # Check online status
     def check_online(self):
+        """
+        檢查登入狀態
+        """
         try:
-            response = self.session.get(self.url + '/TopMenu', timeout=0.5, verify=False)
+            # 取得資料
+            response = self.__session.get(
+                self.__url + '/TopMenu', timeout=0.5, verify=False)
             soup = BeautifulSoup(response.text, 'html.parser')
+            # 回傳是否為登入成功才看得到的網頁
             return soup.find('a').get_text().strip() == '線上考試'
 
         except requests.exceptions.Timeout:
             return None
 
-    # List all questions, deadline and hand-in status
-    def list_questions(self):
+    def get_questions(self):
+        """
+        取得課程中的所有題目資訊
+        """
         try:
-            questions = {}
-            response = self.session.get(self.url + '/HomeworkBoard', timeout=0.5, verify=False)
+            # 取得資料
+            response = self.__session.get(
+                self.__url + '/HomeworkBoard', timeout=0.5, verify=False)
             soup = BeautifulSoup(response.text, 'html.parser')
-
+            # 整理題目資訊
+            questions = {}
             for tag in soup.find_all('tr'):
+                # 去除標題列
                 if tag.find('a') == None:
                     continue
 
-                else:
-                    number = tag.find('a').get_text().strip()
-                    deadline = tag.find_all('td')[3].get_text().strip()
-                    submit = '期限已到' if tag.find_all('td')[4].get_text().strip() == '期限已過' else '期限未到'
-                    status = tag.find_all('td')[6].get_text().strip()
-                    language = tag.find_all('td')[5].get_text().strip()
-                    questions[number] = [deadline, submit, status, language]
-
+                # 取得題號
+                number = tag.find('a').get_text().strip()
+                # 儲存題目資訊
+                questions[number] = {
+                    # 繳交期限
+                    'deadline': tag.find_all('td')[3].get_text().strip(),
+                    # 是否已經過期限
+                    'expired': tag.find_all('td')[4].get_text().strip() == '期限已過',
+                    # 是否繳交
+                    'status': tag.find_all('td')[6].get_text().strip() == '已繳',
+                    # 程式語言種類
+                    'language': tag.find_all('td')[5].get_text().strip(),
+                }
+            # 回傳結果
             return questions
 
         except requests.exceptions.Timeout:
-            return {'Timeout': ['Timeout', 'Timeout', 'Timeout', 'Timeout']}
+            return {
+                "Timeout": {
+                    'deadline': "Timeout",
+                    'expired': False,
+                    'status': False,
+                    'language': "Timeout",
+                }
+            }
 
-    # Show the content of the question
-    def show_question(self, number):
+    def list_questions(self):
+        """
+        [deprecated] 建議使用 `get_questions()`
+        """
+        # 取得新 API 的結果
+        data = self.get_questions()
+        # 實作相容的結構
+        result = {}
+        for number in data:
+            # 繳交期限
+            deadline = data[number]['deadline']
+            # 是否已經過期限
+            expired = '期限已到' if data[number]['expired'] else '期限未到'
+            # 是否繳交
+            status = '已繳' if data[number]['status'] else '未繳'
+            # 程式語言種類
+            language = data[number]['language']
+            # 儲存題目資訊
+            result[number] = [deadline, expired, status, language]
+        # 回傳結果
+        return result
+
+    def get_question_content(self, number):
+        """
+        取得課程中特定題目內容
+        """
         try:
-            response = self.session.get(self.url + '/showHomework', params={'hwId': number}, timeout=0.5, verify=False)
+            # 操作所需資訊
+            params = {
+                'hwId': number
+            }
+            # 取得資料
+            response = self.__session.get(
+                self.__url + '/showHomework', params=params, timeout=0.5, verify=False)
             soup = BeautifulSoup(response.text, 'html.parser')
-            content = ''
-            for s in soup.find('body').get_text().replace('繳交作業', '').strip().split('\r'):
-                content += s.strip() + '\n'
-            return content
+            # 處理題目內容的 \r
+            result = ''
+            content = soup.find('body').get_text().replace('繳交作業', '').strip()
+            for line in content.split('\r'):
+                result += line.strip() + '\n'
+            # 回傳結果
+            return result
 
         except requests.exceptions.Timeout:
-            return 'Timeout'
+            return "Timeout"
 
-    # List passers of the question
-    def list_passers(self, number):
+    def show_question(self, number):
+        """
+        [deprecated] 建議使用 `get_question_content()`
+        """
+        # 直接回傳新 API 的結果
+        return self.get_question_content(number)
+
+    def get_question_passers(self, number):
+        """
+        取得課程中特定題目通過者列表
+        """
         try:
-            passers = []
-            response = self.session.get(self.url + '/success.jsp', params={'HW_ID': number}, timeout=0.5, verify=False)
+            # 操作所需資訊
+            params = {
+                'HW_ID': number
+            }
+            # 取得資料
+            response = self.__session.get(
+                self.__url + '/success.jsp', params=params, timeout=0.5, verify=False)
             soup = BeautifulSoup(response.text, 'html.parser')
-            for tr in soup.find_all('tr'):
-                passer = tr.get_text().replace('\n', '').strip()
+            # 整理通過者資訊
+            passers = []
+            for tag in soup.find_all('tr'):
+                # 取得通過者學號
+                passer = tag.get_text().replace('\n', '').strip()
+                # 跳過標題列
                 if passer != '學號':
-                    passers += [passer]
+                    passers.append(passer)
+            # 回傳結果
             return passers
 
         except requests.exceptions.Timeout:
-            return ['Timeout']
+            return ["Timeout"]
 
-    # List results of the question
-    def list_results(self, number, username):
+    def list_passers(self, number):
+        """
+        [deprecated] 建議使用 `get_question_passers()`
+        """
+        # 直接回傳新 API 的結果
+        return self.get_question_passers(number)
+
+    def get_question_results(self, number, username):
+        """
+        取得課程中特定題目指定用戶之測試結果
+        """
         try:
-            results = []
-            response = self.session.get(self.url + '/CheckResult.jsp', params={'questionID': number, 'studentID': username}, timeout=0.5, verify=False)
+            # 操作所需資訊
+            params = {
+                'questionID': number,
+                'studentID': username
+            }
+            # 取得資料
+            response = self.__session.get(
+                self.__url + '/CheckResult.jsp', params=params, timeout=0.5, verify=False)
             soup = BeautifulSoup(response.text, 'html.parser')
-            for tr in soup.find_all('tr'):
-                td = tr.find('td')
-                if td.get_text().strip() != '測試編號':
-                    results += [(td.get_text().strip(), tr.find_all('td')[1].get_text().strip())]
+            # 整理指定用戶之測試結果
+            results = {}
+            for tag in soup.find_all('tr'):
+                # 取得測試結果
+                result = tag.find_all('td')
+                # 跳過標題列
+                if result[0].get_text().strip() != '測試編號':
+                    results[result[0].get_text().strip()] = result[1].get_text().strip()
+            # 回傳結果
             return results
 
         except requests.exceptions.Timeout:
-            return ['Timeout', 'Timeout']
+            return {'Timeout': 'Timeout'}
+
+    def list_results(self, number, username):
+        """
+        [deprecated] 建議使用 `get_question_results()`
+        """
+        # 取得新 API 的結果
+        data = self.get_question_results(number, username)
+        # 實作相容的結構
+        result = []
+        for number in data:
+            # 儲存題目資訊
+            result += [(number, data[number])]
+        # 回傳結果
+        return result
 
     # Change password
     def change_password(self, password):
         try:
             payload = {
-                'pass': password, 
+                'pass': password,
                 'submit': 'sumit'
             }
-            response = self.session.post(self.url + '/changePasswd', data=payload, timeout=0.5, verify=False)
+            response = self.__session.post(
+                self.__url + '/changePasswd', data=payload, timeout=0.5, verify=False)
             soup = BeautifulSoup(response.text, 'html.parser')
             return str(soup.find('body')).split()[-2].strip() == 'Success'
 
@@ -125,7 +250,8 @@ class KCOJ:
     # Delete the answer of the question
     def delete_answer(self, number):
         try:
-            response = self.session.get(self.url + '/delHw', params={'title': number}, timeout=0.5, verify=False)
+            response = self.__session.get(
+                self.__url + '/delHw', params={'title': number}, timeout=0.5, verify=False)
             soup = BeautifulSoup(response.text, 'html.parser')
             return soup.find('body').get_text().replace('\n', '').strip() == 'delete success'
 
@@ -135,14 +261,17 @@ class KCOJ:
     # Hand in a answer
     def upload_answer(self, number, file_path):
         try:
-            self.session.get(self.url + '/upLoadHw', params={'hwId': number}, timeout=0.5, verify=False)
-            response = self.session.post(self.url + '/upLoadFile', 
-                data={'FileDesc': 'Send from KCOJ_api'},
-                files={'hwFile': open(file_path, 'rb')},
-                timeout=0.5)
+            self.__session.get(self.__url + '/upLoadHw',
+                               params={'hwId': number}, timeout=0.5, verify=False)
+            response = self.__session.post(self.__url + '/upLoadFile',
+                                           data={
+                                               'FileDesc': 'Send from KCOJ_api'},
+                                           files={'hwFile': open(
+                                               file_path, 'rb')},
+                                           timeout=0.5)
             soup = BeautifulSoup(response.text, 'html.parser')
             return soup.find('body').get_text().strip() != '您沒有上傳檔案 請重新操作'
-            
+
         except requests.exceptions.Timeout:
             return False
 
@@ -150,7 +279,8 @@ class KCOJ:
     def get_notices(self):
         try:
             notices = []
-            response = self.session.get(self.url + '/MessageBoard', timeout=0.5, verify=False)
+            response = self.__session.get(
+                self.__url + '/MessageBoard', timeout=0.5, verify=False)
             soup = BeautifulSoup(response.text, 'html.parser')
 
             for tag in soup.find_all('tr'):
@@ -161,13 +291,16 @@ class KCOJ:
                     date = tag.find_all('td')[1].get_text().strip()
                     title = tag.find('a').get_text().strip()
 
-                    response = self.session.get(self.url + '/showArticle?time=' + date, timeout=0.5, verify=False)
+                    response = self.__session.get(
+                        self.__url + '/showArticle?time=' + date, timeout=0.5, verify=False)
                     soup = BeautifulSoup(response.text, 'html.parser')
-                    content = soup.find('pre').get_text().strip().replace('\r', '')
-                    
+                    content = soup.find(
+                        'pre').get_text().strip().replace('\r', '')
+
                     notices.append([date, title, content])
 
             return notices
 
         except requests.exceptions.Timeout:
             return [['Timeout', 'Timeout', 'Timeout']]
+            
