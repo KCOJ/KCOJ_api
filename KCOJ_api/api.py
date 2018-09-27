@@ -9,7 +9,8 @@ class KCOJ:
         self.__url = url
         self.__session = requests.Session()
 
-    def get_courses(self):
+    @property
+    def courses(self) -> list:
         """
         取得課程列表
         """
@@ -28,7 +29,14 @@ class KCOJ:
         except requests.exceptions.Timeout:
             return ["Timeout"]
 
-    def login(self, username, password, course):
+    def get_courses(self):
+        """
+        [deprecated] 建議使用屬性 `courses`
+        """
+        # 直接回傳新 API 的結果
+        return self.courses
+
+    def login(self, username, password, course) -> requests.Response:
         """
         登入課程
         """
@@ -46,7 +54,8 @@ class KCOJ:
         except requests.exceptions.Timeout:
             return None
 
-    def check_online(self):
+    @property
+    def logged(self) -> bool:
         """
         檢查登入狀態
         """
@@ -61,7 +70,14 @@ class KCOJ:
         except requests.exceptions.Timeout:
             return None
 
-    def get_questions(self):
+    def check_online(self):
+        """
+        [deprecated] 建議使用屬性 `logged`
+        """
+        # 直接回傳新 API 的結果
+        return self.logged
+
+    def get_question(self) -> dict:
         """
         取得課程中的所有題目資訊
         """
@@ -105,10 +121,10 @@ class KCOJ:
 
     def list_questions(self):
         """
-        [deprecated] 建議使用 `get_questions()`
+        [deprecated] 建議使用方法 `get_question()`
         """
         # 取得新 API 的結果
-        data = self.get_questions()
+        data = self.get_question()
         # 實作相容的結構
         result = {}
         for number in data:
@@ -125,7 +141,7 @@ class KCOJ:
         # 回傳結果
         return result
 
-    def get_question_content(self, number):
+    def get_question_content(self, number) -> str:
         """
         取得課程中特定題目內容
         """
@@ -151,12 +167,12 @@ class KCOJ:
 
     def show_question(self, number):
         """
-        [deprecated] 建議使用 `get_question_content()`
+        [deprecated] 建議使用方法 `get_question_content()`
         """
         # 直接回傳新 API 的結果
         return self.get_question_content(number)
 
-    def get_question_passers(self, number):
+    def get_question_passers(self, number) -> list:
         """
         取得課程中特定題目通過者列表
         """
@@ -185,12 +201,12 @@ class KCOJ:
 
     def list_passers(self, number):
         """
-        [deprecated] 建議使用 `get_question_passers()`
+        [deprecated] 建議使用方法 `get_question_passers()`
         """
         # 直接回傳新 API 的結果
         return self.get_question_passers(number)
 
-    def get_question_results(self, number, username):
+    def get_question_results(self, number, username) -> dict:
         """
         取得課程中特定題目指定用戶之測試結果
         """
@@ -211,7 +227,9 @@ class KCOJ:
                 result = tag.find_all('td')
                 # 跳過標題列
                 if result[0].get_text().strip() != '測試編號':
-                    results[result[0].get_text().strip()] = result[1].get_text().strip()
+                    index = result[0].get_text().strip()
+                    status = result[1].get_text().strip()
+                    results[index] = status
             # 回傳結果
             return results
 
@@ -220,7 +238,7 @@ class KCOJ:
 
     def list_results(self, number, username):
         """
-        [deprecated] 建議使用 `get_question_results()`
+        [deprecated] 建議使用方法 `get_question_results()`
         """
         # 取得新 API 的結果
         data = self.get_question_results(number, username)
@@ -232,75 +250,139 @@ class KCOJ:
         # 回傳結果
         return result
 
-    # Change password
-    def change_password(self, password):
+    def update_password(self, password) -> bool:
+        """
+        修改登入密碼
+        """
         try:
+            # 操作所需資訊
             payload = {
                 'pass': password,
                 'submit': 'sumit'
             }
+            # 修改密碼
             response = self.__session.post(
                 self.__url + '/changePasswd', data=payload, timeout=0.5, verify=False)
             soup = BeautifulSoup(response.text, 'html.parser')
+            # 回傳結果
             return str(soup.find('body')).split()[-2].strip() == 'Success'
 
         except requests.exceptions.Timeout:
-            return False
+            return None
 
-    # Delete the answer of the question
-    def delete_answer(self, number):
+    def change_password(self, password):
+        """
+        [deprecated] 建議使用方法 `update_password()`
+        """
+        # 直接回傳新 API 的結果
+        return self.update_password(password)
+
+    def delete_question_answer(self, number) -> bool:
+        """
+        刪除特定題目的作業
+        """
         try:
+            # 操作所需資訊
+            params = {
+                'title': number
+            }
+            # 刪除作業
             response = self.__session.get(
-                self.__url + '/delHw', params={'title': number}, timeout=0.5, verify=False)
+                self.__url + '/delHw', params=params, timeout=0.5, verify=False)
             soup = BeautifulSoup(response.text, 'html.parser')
+            # 回傳結果
             return soup.find('body').get_text().replace('\n', '').strip() == 'delete success'
 
         except requests.exceptions.Timeout:
-            return False
+            return None
 
-    # Hand in a answer
-    def upload_answer(self, number, file_path):
+    def delete_answer(self, number):
+        """
+        [deprecated] 建議使用方法 `delete_question_answer()`
+        """
+        # 直接回傳新 API 的結果
+        return self.delete_question_answer(number)
+
+    def post_question_answer(self, number, file_path) -> bool:
+        """
+        上傳特定題目的作業
+        """
         try:
+            # 操作所需資訊
+            params = {
+                'hwId': number
+            }
+            data = {
+                'FileDesc': 'Send from KCOJ_api'
+            }
+            files = {
+                'hwFile': open(file_path, 'rb')
+            }
+            # 上傳作業
             self.__session.get(self.__url + '/upLoadHw',
-                               params={'hwId': number}, timeout=0.5, verify=False)
-            response = self.__session.post(self.__url + '/upLoadFile',
-                                           data={
-                                               'FileDesc': 'Send from KCOJ_api'},
-                                           files={'hwFile': open(
-                                               file_path, 'rb')},
-                                           timeout=0.5)
+                               params=params, timeout=0.5, verify=False)
+            response = self.__session.post(
+                self.__url + '/upLoadFile', data=data, files=files, timeout=0.5)
             soup = BeautifulSoup(response.text, 'html.parser')
+            # 回傳結果
             return soup.find('body').get_text().strip() != '您沒有上傳檔案 請重新操作'
 
         except requests.exceptions.Timeout:
             return False
 
-    # Get notice in MessageBoard
-    def get_notices(self):
+    def upload_answer(self, number, file_path):
+        """
+        [deprecated] 建議使用方法 `post_question_answer()`
+        """
+        # 直接回傳新 API 的結果
+        return self.post_question_answer(number, file_path)
+
+    def get_notice(self) -> dict:
+        """
+        取得公布欄訊息列表
+        """
         try:
-            notices = []
+            # 取得資料
             response = self.__session.get(
                 self.__url + '/MessageBoard', timeout=0.5, verify=False)
             soup = BeautifulSoup(response.text, 'html.parser')
-
+            # 整理公布欄訊息列表
+            notices = {}
             for tag in soup.find_all('tr'):
-                if tag.find('a') == None:
-                    continue
-
-                else:
-                    date = tag.find_all('td')[1].get_text().strip()
+                # 跳過標題列
+                if tag.find('a') != None:
                     title = tag.find('a').get_text().strip()
-
-                    response = self.__session.get(
-                        self.__url + '/showArticle?time=' + date, timeout=0.5, verify=False)
-                    soup = BeautifulSoup(response.text, 'html.parser')
-                    content = soup.find(
-                        'pre').get_text().strip().replace('\r', '')
-
-                    notices.append([date, title, content])
-
+                    date = tag.find_all('td')[1].get_text().strip()
+                    notices[date] = title
+            # 回傳結果
             return notices
 
         except requests.exceptions.Timeout:
-            return [['Timeout', 'Timeout', 'Timeout']]
-            
+            return {"Timeout": "Timeout"}
+
+    def get_notice_content(self, time) -> str:
+        """
+        取得公布欄特定訊息內容
+        """
+        try:
+            # 取得資料
+            response = self.__session.get(
+                self.__url + '/showArticle?time=' + time, timeout=0.5, verify=False)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            # 回傳結果
+            return soup.find('pre').get_text().strip().replace('\r', '')
+
+        except requests.exceptions.Timeout:
+            return "Timeout"
+
+    def get_notices(self):
+        """
+        [deprecated] 建議使用方法 `get_notice()` 及 `get_notice_content()`
+        """
+        result = []
+        # 取得公布欄訊息列表
+        for date, title in self.get_notice().items():
+            content = self.get_notice_content(date)
+            result.append([date, title, content])
+        # 回傳結果
+        return result
