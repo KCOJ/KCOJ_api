@@ -29,13 +29,6 @@ class KCOJ:
         except requests.exceptions.Timeout:
             return ["Timeout"]
 
-    def get_courses(self):
-        """
-        [deprecated] 建議使用屬性 `courses`
-        """
-        # 直接回傳新 API 的結果
-        return self.courses
-
     def login(self, username, password, course) -> requests.Response:
         """
         登入課程
@@ -69,13 +62,6 @@ class KCOJ:
 
         except requests.exceptions.Timeout:
             return None
-
-    def check_online(self):
-        """
-        [deprecated] 建議使用屬性 `logged`
-        """
-        # 直接回傳新 API 的結果
-        return self.logged
 
     def get_question(self) -> dict:
         """
@@ -119,28 +105,6 @@ class KCOJ:
                 }
             }
 
-    def list_questions(self):
-        """
-        [deprecated] 建議使用方法 `get_question()`
-        """
-        # 取得新 API 的結果
-        data = self.get_question()
-        # 實作相容的結構
-        result = {}
-        for number in data:
-            # 繳交期限
-            deadline = data[number]['deadline']
-            # 是否已經過期限
-            expired = '期限已到' if data[number]['expired'] else '期限未到'
-            # 是否繳交
-            status = '已繳' if data[number]['status'] else '未繳'
-            # 程式語言種類
-            language = data[number]['language']
-            # 儲存題目資訊
-            result[number] = [deadline, expired, status, language]
-        # 回傳結果
-        return result
-
     def get_question_content(self, number) -> str:
         """
         取得課程中特定題目內容
@@ -164,13 +128,6 @@ class KCOJ:
 
         except requests.exceptions.Timeout:
             return "Timeout"
-
-    def show_question(self, number):
-        """
-        [deprecated] 建議使用方法 `get_question_content()`
-        """
-        # 直接回傳新 API 的結果
-        return self.get_question_content(number)
 
     def get_question_passers(self, number) -> list:
         """
@@ -198,13 +155,6 @@ class KCOJ:
 
         except requests.exceptions.Timeout:
             return ["Timeout"]
-
-    def list_passers(self, number):
-        """
-        [deprecated] 建議使用方法 `get_question_passers()`
-        """
-        # 直接回傳新 API 的結果
-        return self.get_question_passers(number)
 
     def get_question_results(self, number, username) -> dict:
         """
@@ -236,20 +186,6 @@ class KCOJ:
         except requests.exceptions.Timeout:
             return {'Timeout': 'Timeout'}
 
-    def list_results(self, number, username):
-        """
-        [deprecated] 建議使用方法 `get_question_results()`
-        """
-        # 取得新 API 的結果
-        data = self.get_question_results(number, username)
-        # 實作相容的結構
-        result = []
-        for number in data:
-            # 儲存題目資訊
-            result += [(number, data[number])]
-        # 回傳結果
-        return result
-
     def update_password(self, password) -> bool:
         """
         修改登入密碼
@@ -270,13 +206,6 @@ class KCOJ:
         except requests.exceptions.Timeout:
             return None
 
-    def change_password(self, password):
-        """
-        [deprecated] 建議使用方法 `update_password()`
-        """
-        # 直接回傳新 API 的結果
-        return self.update_password(password)
-
     def delete_question_answer(self, number) -> bool:
         """
         刪除特定題目的作業
@@ -295,13 +224,6 @@ class KCOJ:
 
         except requests.exceptions.Timeout:
             return None
-
-    def delete_answer(self, number):
-        """
-        [deprecated] 建議使用方法 `delete_question_answer()`
-        """
-        # 直接回傳新 API 的結果
-        return self.delete_question_answer(number)
 
     def post_question_answer(self, number, description, file_path) -> bool:
         """
@@ -329,13 +251,6 @@ class KCOJ:
 
         except requests.exceptions.Timeout:
             return False
-
-    def upload_answer(self, number, file_path):
-        """
-        [deprecated] 建議使用方法 `post_question_answer()`
-        """
-        # 直接回傳新 API 的結果
-        return self.post_question_answer(number, "Send from KCOJ_api", file_path)
 
     def get_notice(self) -> dict:
         """
@@ -386,3 +301,88 @@ class KCOJ:
             result.append([date, title, content])
         # 回傳結果
         return result
+
+    def get_courses(self):
+        """
+        [deprecated] 建議使用屬性 `courses`
+        """
+        # 直接回傳新 API 的結果
+        return self.courses
+
+    def check_online(self):
+        """
+        [deprecated] 建議使用屬性 `logged`
+        """
+        # 直接回傳新 API 的結果
+        return self.logged
+
+    def list_questions(self):
+        """
+        [deprecated] 建議使用方法 `get_question()`
+        """
+        # 取得新 API 的結果
+        data = self.get_question()
+        # 實作相容的結構
+        result = {}
+        for number in data:
+            # 繳交期限
+            deadline = data[number]['deadline']
+            # 是否已經過期限
+            expired = '期限已到' if data[number]['expired'] else '期限未到'
+            # 是否繳交
+            status = '已繳' if data[number]['status'] else '未繳'
+            # 程式語言種類
+            language = data[number]['language']
+            # 儲存題目資訊
+            result[number] = [deadline, expired, status, language]
+        # 回傳結果
+        return result
+
+    def show_question(self, number):
+        """
+        [deprecated] 建議使用方法 `get_question_content()`
+        """
+        # 直接回傳新 API 的結果
+        return self.get_question_content(number)
+
+    def list_passers(self, number):
+        """
+        [deprecated] 建議使用方法 `get_question_passers()`
+        """
+        # 直接回傳新 API 的結果
+        return self.get_question_passers(number)
+
+    def list_results(self, number, username):
+        """
+        [deprecated] 建議使用方法 `get_question_results()`
+        """
+        # 取得新 API 的結果
+        data = self.get_question_results(number, username)
+        # 實作相容的結構
+        result = []
+        for number in data:
+            # 儲存題目資訊
+            result += [(number, data[number])]
+        # 回傳結果
+        return result
+
+    def change_password(self, password):
+        """
+        [deprecated] 建議使用方法 `update_password()`
+        """
+        # 直接回傳新 API 的結果
+        return self.update_password(password)
+
+    def delete_answer(self, number):
+        """
+        [deprecated] 建議使用方法 `delete_question_answer()`
+        """
+        # 直接回傳新 API 的結果
+        return self.delete_question_answer(number)
+
+    def upload_answer(self, number, file_path):
+        """
+        [deprecated] 建議使用方法 `post_question_answer()`
+        """
+        # 直接回傳新 API 的結果
+        return self.post_question_answer(number, "Send from KCOJ_api", file_path)
