@@ -29,6 +29,22 @@ class KCOJ:
         except requests.exceptions.Timeout:
             return ["Timeout"]
 
+    @property
+    def logged(self) -> bool:
+        """
+        檢查登入狀態
+        """
+        try:
+            # 取得資料
+            response = self.__session.get(
+                self.__url + '/TopMenu', timeout=0.5, verify=False)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            # 回傳是否為登入成功才看得到的網頁
+            return soup.find('a').get_text().strip() == '線上考試'
+
+        except requests.exceptions.Timeout:
+            return None
+
     def login(self, username, password, course) -> requests.Response:
         """
         登入課程
@@ -43,22 +59,6 @@ class KCOJ:
             # 回傳嘗試登入的回應
             return self.__session.post(
                 self.__url + '/Login', data=payload, timeout=0.5, verify=False)
-
-        except requests.exceptions.Timeout:
-            return None
-
-    @property
-    def logged(self) -> bool:
-        """
-        檢查登入狀態
-        """
-        try:
-            # 取得資料
-            response = self.__session.get(
-                self.__url + '/TopMenu', timeout=0.5, verify=False)
-            soup = BeautifulSoup(response.text, 'html.parser')
-            # 回傳是否為登入成功才看得到的網頁
-            return soup.find('a').get_text().strip() == '線上考試'
 
         except requests.exceptions.Timeout:
             return None
@@ -206,25 +206,6 @@ class KCOJ:
         except requests.exceptions.Timeout:
             return None
 
-    def delete_question_answer(self, number) -> bool:
-        """
-        刪除特定題目的作業
-        """
-        try:
-            # 操作所需資訊
-            params = {
-                'title': number
-            }
-            # 刪除作業
-            response = self.__session.get(
-                self.__url + '/delHw', params=params, timeout=0.5, verify=False)
-            soup = BeautifulSoup(response.text, 'html.parser')
-            # 回傳結果
-            return soup.find('body').get_text().replace('\n', '').strip() == 'delete success'
-
-        except requests.exceptions.Timeout:
-            return None
-
     def post_question_answer(self, number, description, file_path) -> bool:
         """
         上傳特定題目的作業
@@ -251,6 +232,25 @@ class KCOJ:
 
         except requests.exceptions.Timeout:
             return False
+
+    def delete_question_answer(self, number) -> bool:
+        """
+        刪除特定題目的作業
+        """
+        try:
+            # 操作所需資訊
+            params = {
+                'title': number
+            }
+            # 刪除作業
+            response = self.__session.get(
+                self.__url + '/delHw', params=params, timeout=0.5, verify=False)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            # 回傳結果
+            return soup.find('body').get_text().replace('\n', '').strip() == 'delete success'
+
+        except requests.exceptions.Timeout:
+            return None
 
     def get_notice(self) -> dict:
         """
