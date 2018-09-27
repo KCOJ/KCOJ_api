@@ -303,7 +303,7 @@ class KCOJ:
         # 直接回傳新 API 的結果
         return self.delete_question_answer(number)
 
-    def post_question_answer(self, number, file_path) -> bool:
+    def post_question_answer(self, number, description, file_path) -> bool:
         """
         上傳特定題目的作業
         """
@@ -313,7 +313,7 @@ class KCOJ:
                 'hwId': number
             }
             data = {
-                'FileDesc': 'Send from KCOJ_api'
+                'FileDesc': description
             }
             files = {
                 'hwFile': open(file_path, 'rb')
@@ -335,7 +335,7 @@ class KCOJ:
         [deprecated] 建議使用方法 `post_question_answer()`
         """
         # 直接回傳新 API 的結果
-        return self.post_question_answer(number, file_path)
+        return self.post_question_answer(number, "Send from KCOJ_api", file_path)
 
     def get_notice(self) -> dict:
         """
