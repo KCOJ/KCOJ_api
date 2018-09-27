@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 
 
 class KCOJ:
-    def __init__(self, url):
+    def __init__(self, url: str):
         self.__url = url
         self.__session = requests.Session()
 
@@ -45,7 +45,7 @@ class KCOJ:
         except requests.exceptions.Timeout:
             return None
 
-    def login(self, username, password, course) -> requests.Response:
+    def login(self, username: str, password: str, course: int) -> requests.Response:
         """
         登入課程
         """
@@ -105,7 +105,7 @@ class KCOJ:
                 }
             }
 
-    def get_question_content(self, number) -> str:
+    def get_question_content(self, number: str) -> str:
         """
         取得課程中特定題目內容
         """
@@ -129,7 +129,7 @@ class KCOJ:
         except requests.exceptions.Timeout:
             return "Timeout"
 
-    def get_question_passers(self, number) -> list:
+    def get_question_passers(self, number: str) -> list:
         """
         取得課程中特定題目通過者列表
         """
@@ -156,7 +156,7 @@ class KCOJ:
         except requests.exceptions.Timeout:
             return ["Timeout"]
 
-    def get_question_results(self, number, username) -> dict:
+    def get_question_results(self, number: str, username: str) -> dict:
         """
         取得課程中特定題目指定用戶之測試結果
         """
@@ -186,7 +186,7 @@ class KCOJ:
         except requests.exceptions.Timeout:
             return {'Timeout': 'Timeout'}
 
-    def update_password(self, password) -> bool:
+    def update_password(self, password: str) -> bool:
         """
         修改登入密碼
         """
@@ -206,7 +206,7 @@ class KCOJ:
         except requests.exceptions.Timeout:
             return None
 
-    def post_question_answer(self, number, description, file_path) -> bool:
+    def post_question_answer(self, number: str, description: str, file_path: str) -> bool:
         """
         上傳特定題目的作業
         """
@@ -233,7 +233,7 @@ class KCOJ:
         except requests.exceptions.Timeout:
             return False
 
-    def delete_question_answer(self, number) -> bool:
+    def delete_question_answer(self, number: str) -> bool:
         """
         刪除特定題目的作業
         """
@@ -275,7 +275,7 @@ class KCOJ:
         except requests.exceptions.Timeout:
             return {"Timeout": "Timeout"}
 
-    def get_notice_content(self, time) -> str:
+    def get_notice_content(self, time: str) -> str:
         """
         取得公布欄特定訊息內容
         """
