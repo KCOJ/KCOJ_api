@@ -30,7 +30,7 @@ class KCOJ:
             return ["Timeout"]
 
     @property
-    def logged(self) -> bool:
+    def active(self) -> bool:
         """
         檢查登入狀態
         """
@@ -311,10 +311,10 @@ class KCOJ:
 
     def check_online(self):
         """
-        [deprecated] 建議使用屬性 `logged`
+        [deprecated] 建議使用屬性 `active`
         """
         # 直接回傳新 API 的結果
-        return self.logged
+        return self.active
 
     def list_questions(self):
         """
