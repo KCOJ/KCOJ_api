@@ -22,7 +22,7 @@ Use `login()` to login real KCOJ.
 
 Check online status.
 ```python
->>> kcoj.logged
+>>> kcoj.active
 True
 ```
 
