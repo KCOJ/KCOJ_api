@@ -63,7 +63,7 @@ class KCOJ:
         except requests.exceptions.Timeout:
             return None
 
-    def get_question(self) -> dict:
+    def get_question(self, number: str=None) -> dict:
         """
         取得課程中的所有題目資訊
         """
@@ -79,10 +79,8 @@ class KCOJ:
                 if tag.find('a') == None:
                     continue
 
-                # 取得題號
-                number = tag.find('a').get_text().strip()
                 # 儲存題目資訊
-                questions[number] = {
+                questions[tag.find('a').get_text().strip()] = {
                     # 繳交期限
                     'deadline': tag.find_all('td')[3].get_text().strip(),
                     # 是否已經過期限
@@ -93,7 +91,10 @@ class KCOJ:
                     'language': tag.find_all('td')[5].get_text().strip(),
                 }
             # 回傳結果
-            return questions
+            if number != None:
+                return questions.get(number)
+            else:
+                return questions
 
         except requests.exceptions.Timeout:
             return {
