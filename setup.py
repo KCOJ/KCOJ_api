@@ -8,7 +8,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='KCOJ_api',
-    version='1.6.1',
+    version='1.7',
     description='A Python Module for get data from real KCOJ.',
     long_description=long_description,
     long_description_content_type='text/markdown',
