@@ -45,7 +45,7 @@ class KCOJ:
         except requests.exceptions.Timeout:
             return None
 
-    def login(self, username: str, password: str, course: int) -> requests.Response:
+    def connect(self, username: str, password: str, course: int) -> bool:
         """
         登入課程
         """
@@ -56,9 +56,11 @@ class KCOJ:
                 'passwd': password,
                 'rdoCourse': course
             }
-            # 回傳嘗試登入的回應
-            return self.__session.post(
-                self.__url + '/Login', data=payload, timeout=0.5, verify=False)
+            # 嘗試登入
+            self.__session.post(self.__url + '/Login',
+                                data=payload, timeout=0.5, verify=False)
+            # 回傳是否登入成功
+            return self.active
 
         except requests.exceptions.Timeout:
             return None
@@ -387,3 +389,21 @@ class KCOJ:
         """
         # 直接回傳新 API 的結果
         return self.post_question_answer(number, "Send from KCOJ_api", file_path)
+
+    def login(self, username: str, password: str, course: int) -> requests.Response:
+        """
+        [deprecated] 建議使用方法 `connect()`
+        """
+        try:
+            # 操作所需資訊
+            payload = {
+                'name': username,
+                'passwd': password,
+                'rdoCourse': course
+            }
+            # 回傳嘗試登入的回應
+            return self.__session.post(
+                self.__url + '/Login', data=payload, timeout=0.5, verify=False)
+
+        except requests.exceptions.Timeout:
+            return None
